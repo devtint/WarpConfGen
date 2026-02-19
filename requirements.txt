@@ -4,3 +4,4 @@ requests
 PyNaCl
 qrcode[pil]
 python-multipart
+python-dotenv
