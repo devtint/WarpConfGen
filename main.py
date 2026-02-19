@@ -1,15 +1,17 @@
 import base64
+from collections import defaultdict, deque
 import html
 import io
 import ipaddress
 import socket
+from threading import Lock
 import time
 import urllib.parse
 
 import qrcode
 import requests
-from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse
 from nacl.public import PrivateKey
 
 
@@ -27,6 +29,55 @@ PEER_PUBLIC_KEY = "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo="
 
 
 app = FastAPI(title="WARP Generator")
+
+
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_GENERAL = 120
+RATE_LIMIT_GENERATE = 20
+_rate_limit_lock = Lock()
+_rate_limit_buckets = defaultdict(deque)
+
+
+def get_client_ip(request: Request):
+    forwarded_for = request.headers.get("x-forwarded-for", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    path = request.url.path
+    client_ip = get_client_ip(request)
+    now = time.time()
+
+    is_generate = path == "/generate"
+    limit = RATE_LIMIT_GENERATE if is_generate else RATE_LIMIT_GENERAL
+    bucket_key = f"{client_ip}:{'generate' if is_generate else 'general'}"
+
+    with _rate_limit_lock:
+        bucket = _rate_limit_buckets[bucket_key]
+        cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+        while bucket and bucket[0] <= cutoff:
+            bucket.popleft()
+
+        if len(bucket) >= limit:
+            return PlainTextResponse(
+                f"Rate limit exceeded. Try again in {RATE_LIMIT_WINDOW_SECONDS} seconds.",
+                status_code=429,
+                headers={"Retry-After": str(RATE_LIMIT_WINDOW_SECONDS)},
+            )
+
+        bucket.append(now)
+        remaining = max(0, limit - len(bucket))
+
+    response = await call_next(request)
+    response.headers["X-RateLimit-Limit"] = str(limit)
+    response.headers["X-RateLimit-Remaining"] = str(remaining)
+    response.headers["X-RateLimit-Window"] = str(RATE_LIMIT_WINDOW_SECONDS)
+    return response
 
 
 def validate_ip(ip_text):
