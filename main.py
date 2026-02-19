@@ -460,7 +460,7 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
     if webhook_status == "success":
         webhook_status_html = "<span style='padding:4px 10px;border-radius:999px;background:#d1fae5;color:#065f46;font-weight:600'>Gen success</span>"
     elif webhook_status == "failed":
-        webhook_status_html = "<span style='padding:4px 10px;border-radius:999px;background:#fee2e2;color:#991b1b;font-weight:600'>Gen failed</span>"
+        webhook_status_html = ""
     elif webhook_status == "skipped":
         webhook_status_html = "<span style='padding:4px 10px;border-radius:999px;background:#e5e7eb;color:#374151;font-weight:600'>Webhook disabled</span>"
     elif webhook_status == "expired":
@@ -555,7 +555,7 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
           <p style="margin-top:0;color:#374151">Generate secure WARP config with QR PNG and .conf using auto/select/custom endpoint IP.</p>
           {stats_html}
           {error_html}
-          <form method="post" action="/generate">
+          <form id="generate-form" method="post" action="/generate">
             <div class="row">
               <div>
                 <label>Endpoint Port (default 500)</label>
@@ -583,7 +583,7 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
             <input name="custom_ip" placeholder="e.g. 162.159.192.1" value="{html.escape(custom_ip)}" />
 
                         <div class="actions">
-                            <button class="btn" type="submit">Generate</button>
+                            <button id="generate-btn" class="btn" type="submit">Generate</button>
                             <button class="btn btn-secondary" type="submit" formaction="/" formmethod="get">Check IP List</button>
                         </div>
           </form>
@@ -626,10 +626,16 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
             <script>
                 (function () {{
                     const HISTORY_KEY = "warpgen_history_v1";
+                    const SCROLL_BOTTOM_KEY = "warpgen_scroll_bottom_v1";
                     const HISTORY_LIMIT = 50;
                     const historyBody = document.getElementById("history-body");
                     const clearBtn = document.getElementById("clear-history-btn");
                     const generatedMeta = document.getElementById("generated-meta");
+                    const generateForm = document.getElementById("generate-form");
+
+                    function scrollToBottom() {{
+                        window.scrollTo({{ top: document.body.scrollHeight, behavior: "smooth" }});
+                    }}
 
                     function loadHistory() {{
                         try {{
@@ -696,11 +702,23 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
                         saveHistory(historyItems);
                     }}
 
+                    if (sessionStorage.getItem(SCROLL_BOTTOM_KEY) === "1" || generatedMeta) {{
+                        sessionStorage.removeItem(SCROLL_BOTTOM_KEY);
+                        setTimeout(() => {{
+                            scrollToBottom();
+                        }}, 60);
+                    }}
+
                     renderHistory(historyItems);
 
                     clearBtn?.addEventListener("click", () => {{
                         localStorage.removeItem(HISTORY_KEY);
                         renderHistory([]);
+                    }});
+
+                    generateForm?.addEventListener("submit", () => {{
+                        sessionStorage.setItem(SCROLL_BOTTOM_KEY, "1");
+                        scrollToBottom();
                     }});
                 }})();
             </script>
