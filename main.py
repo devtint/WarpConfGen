@@ -488,7 +488,7 @@ def render_page(candidate_results, output=None, error_text="", mode="auto", sele
     <section style="margin-top:16px;padding:14px;border-radius:12px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.55)">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
         <div style="display:flex;gap:14px;flex-wrap:wrap">
-                                        <span><strong>Total Gen:</strong> {total_gen_display}</span>
+                                        <span><strong>Total Recent Gen:</strong> {total_gen_display}</span>
         </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">{tracking_status_html}{webhook_status_html}</div>
       </div>
