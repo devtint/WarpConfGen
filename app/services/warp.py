@@ -73,7 +73,7 @@ async def generate_warp(ip: str, port: int) -> WarpResult:
 
     qr_img = qrcode.make(conf)
     buf = io.BytesIO()
-    qr_img.save(buf, format="PNG")
+    qr_img.save(buf)
     qr_b64 = base64.b64encode(buf.getvalue()).decode()
 
     # V2BOX double-decodes subscription URIs:
