@@ -229,8 +229,8 @@ def main():
                     print("  [!] Invalid format. Using default: 100")
                     max_ips = 100
 
-            # 2. Workers (soft max limit of 500 threads)
-            workers = _get_int_input("2. Thread count (Speed) [Default: 100, Soft Max: 500]: ", 100, 1, 500)
+            # 2. Workers (soft max limit of 200 threads)
+            workers = _get_int_input("2. Thread count (Speed) [Default: 100, Soft Max: 200]: ", 100, 1, 200)
 
             # 3. Timeout (soft max limit of 10.0 seconds)
             timeout = _get_float_input("3. Timeout per ping (Seconds) [Default: 1.5, Soft Max: 10.0]: ", 1.5, 0.1, 10.0)
