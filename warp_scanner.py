@@ -199,7 +199,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     # Set default scanner configurations
-    workers = 100
+    workers = 20
     timeout = 1.5
     max_ips = 100  # Default to 100 for fast mobile scans when run interactively
     top = 20
@@ -229,8 +229,8 @@ def main():
                     print("  [!] Invalid format. Using default: 100")
                     max_ips = 100
 
-            # 2. Workers (soft max limit of 200 threads)
-            workers = _get_int_input("2. Thread count (Speed) [Default: 100, Soft Max: 200]: ", 100, 1, 200)
+            # 2. Workers (soft max limit of 100 threads)
+            workers = _get_int_input("2. Thread count (Speed) [Default: 20, Soft Max: 100]: ", 20, 1, 100)
 
             # 3. Timeout (soft max limit of 10.0 seconds)
             timeout = _get_float_input("3. Timeout per ping (Seconds) [Default: 1.5, Soft Max: 10.0]: ", 1.5, 0.1, 10.0)
@@ -243,7 +243,7 @@ def main():
             sys.exit(0)
     else:
         p = argparse.ArgumentParser(description="Cloudflare WARP endpoint scanner")
-        p.add_argument("--workers",  type=int,   default=100,  help="Parallel threads (default: 100)")
+        p.add_argument("--workers",  type=int,   default=20,   help="Parallel threads (default: 20)")
         p.add_argument("--timeout",  type=float, default=1.5,  help="Ping timeout seconds (default: 1.5)")
         p.add_argument("--max-ips",  type=int,   default=None, help="Limit number of IPs to scan")
         p.add_argument("--top",      type=int,   default=20,   help="Top N results (default: 20)")
