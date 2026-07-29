@@ -566,42 +566,88 @@
 
                 <!-- Android -->
                 <div id="tab-android" class="tab-content">
-                    <ul class="step-list">
-                        <li class="step-item">
-                            <span class="step-num">1</span>
-                            <div class="step-title" data-t="and-step-1">Install Termux</div>
-                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="and-step-1-desc">Download Termux from F-Droid (do not use Google Play as it is outdated).</p>
-                        </li>
-                        <li class="step-item">
-                            <span class="step-num">2</span>
-                            <div class="step-title" data-t="and-step-2">Update Packages & Install Python</div>
-                            <div class="code-container">
-                                <code>pkg update && pkg install python curl -y</code>
-                                <button class="btn-copy-code" onclick="copyCode('pkg update && pkg install python curl -y')"><i data-lucide="copy" size="16"></i></button>
-                            </div>
-                        </li>
-                        <li class="step-item">
-                            <span class="step-num">3</span>
-                            <div class="step-title" data-t="and-step-3">Install Dependencies</div>
-                            <div class="code-container">
-                                <code>pip install colorama</code>
-                                <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
-                            </div>
-                            <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
-                        </li>
-                        <li class="step-item">
-                            <span class="step-num">4</span>
-                            <div class="step-title" data-t="and-step-4">Download & Run Scanner</div>
-                            <div class="code-container" style="margin-bottom:8px;">
-                                <code>curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner</code>
-                                <button class="btn-copy-code" onclick="copyCode('curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner')"><i data-lucide="copy" size="16"></i></button>
-                            </div>
-                            <div class="code-container">
-                                <code>python warp_scanner.py --max-ips 150</code>
-                                <button class="btn-copy-code" onclick="copyCode('python warp_scanner.py --max-ips 150')"><i data-lucide="copy" size="16"></i></button>
-                            </div>
-                        </li>
-                    </ul>
+                    <div style="margin-bottom: 24px; padding: 6px; background: rgba(0,0,0,0.04); border-radius: var(--radius-md); display: flex; gap: 4px;">
+                        <button class="tab-btn active" id="btn-and-pydroid" onclick="switchAndroidMethod('pydroid')" style="padding: 8px 12px; font-size:14px;">
+                            Pydroid 3 (Easy)
+                        </button>
+                        <button class="tab-btn" id="btn-and-termux" onclick="switchAndroidMethod('termux')" style="padding: 8px 12px; font-size:14px;">
+                            Termux (Advanced)
+                        </button>
+                    </div>
+
+                    <!-- Pydroid 3 -->
+                    <div id="and-method-pydroid" class="and-method-content">
+                        <ul class="step-list">
+                            <li class="step-item">
+                                <span class="step-num">1</span>
+                                <div class="step-title" data-t="and-py-1">Install Pydroid 3</div>
+                                <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="and-py-1-desc">Download and install "Pydroid 3 - IDE for Python 3" from the Google Play Store.</p>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">2</span>
+                                <div class="step-title" data-t="and-py-2">Install Colorama Package</div>
+                                <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="and-py-2-desc">Open Pydroid 3, open the left sidebar menu, select "Pip", search for "colorama", and tap install.</p>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">3</span>
+                                <div class="step-title" data-t="and-py-3">Run Scanner in Terminal</div>
+                                <p style="color:var(--text-secondary); font-size:14px; margin:0 0 8px 0;" data-t="and-py-3-desc">Open the left sidebar menu, select "Terminal", and run the following commands:</p>
+                                <div class="code-container" style="margin-bottom:8px;">
+                                    <code>curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner</code>
+                                    <button class="btn-copy-code" onclick="copyCode('curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                                <div class="code-container">
+                                    <code>python warp_scanner.py --max-ips 150</code>
+                                    <button class="btn-copy-code" onclick="copyCode('python warp_scanner.py --max-ips 150')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">4</span>
+                                <div class="step-title" data-t="get-results">Copy Best Endpoint</div>
+                                <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-4-desc">The script will print the results sorted by latency. Copy the best working IP:Port address (e.g. 188.114.98.30:500).</p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Termux -->
+                    <div id="and-method-termux" class="and-method-content" style="display: none;">
+                        <ul class="step-list">
+                            <li class="step-item">
+                                <span class="step-num">1</span>
+                                <div class="step-title" data-t="and-step-1">Install Termux</div>
+                                <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="and-step-1-desc">Download Termux from F-Droid (do not use Google Play as it is outdated).</p>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">2</span>
+                                <div class="step-title" data-t="and-step-2">Update Packages & Install Python</div>
+                                <div class="code-container">
+                                    <code>pkg update && pkg install python curl -y</code>
+                                    <button class="btn-copy-code" onclick="copyCode('pkg update && pkg install python curl -y')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">3</span>
+                                <div class="step-title" data-t="and-step-3">Install Dependencies</div>
+                                <div class="code-container">
+                                    <code>pip install colorama</code>
+                                    <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                                <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
+                            </li>
+                            <li class="step-item">
+                                <span class="step-num">4</span>
+                                <div class="step-title" data-t="and-step-4">Download & Run Scanner</div>
+                                <div class="code-container" style="margin-bottom:8px;">
+                                    <code>curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner</code>
+                                    <button class="btn-copy-code" onclick="copyCode('curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                                <div class="code-container">
+                                    <code>python warp_scanner.py --max-ips 150</code>
+                                    <button class="btn-copy-code" onclick="copyCode('python warp_scanner.py --max-ips 150')"><i data-lucide="copy" size="16"></i></button>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="info-alert">
@@ -649,6 +695,12 @@
                 'win-step-py-desc': 'Open Command Prompt and type python. If it is not installed, Windows 10/11 will automatically redirect you to the Microsoft Store to install it. Alternatively, download it from python.org.',
                 'lin-step-py': 'Install Python & Pip (if needed)',
                 'lin-step-py-desc': 'Ensure python3 and pip are installed. On Ubuntu/Debian, run:',
+                'and-py-1': 'Install Pydroid 3',
+                'and-py-1-desc': 'Download and install "Pydroid 3 - IDE for Python 3" from the Google Play Store.',
+                'and-py-2': 'Install Colorama Package',
+                'and-py-2-desc': 'Open Pydroid 3, open the left sidebar menu, select "Pip", search for "colorama", and tap install.',
+                'and-py-3': 'Run Scanner in Terminal',
+                'and-py-3-desc': 'Open the left sidebar menu, select "Terminal", and run the following commands:',
                 'copied': 'Copied!'
             },
             mm: {
@@ -681,6 +733,12 @@
                 'win-step-py-desc': 'Command Prompt ကိုဖွင့်ပြီး python ဟုရိုက်ပါ။ မရှိပါက Windows 10/11 မှ Microsoft Store သို့ တိုက်ရိုက်ခေါ်သွားပြီး install လုပ်ခိုင်းပါလိမ့်မည်။ သို့မဟုတ် python.org မှ ဒေါင်းလုဒ်လုပ်ပါ။',
                 'lin-step-py': 'Python နှင့် Pip သွင်းယူပါ (မရှိသေးပါက)',
                 'lin-step-py-desc': 'စနစ်ထဲတွင် python3 နှင့် pip သွင်းထားပြီးဖြစ်ရပါမည်။ Ubuntu/Debian တွင် အောက်ပါ command ကို Run ပါ -',
+                'and-py-1': 'Pydroid 3 ထည့်သွင်းပါ',
+                'and-py-1-desc': 'Google Play Store မှ "Pydroid 3 - IDE for Python 3" ကို ရှာဖွေပြီး install လုပ်ပါ။',
+                'and-py-2': 'Colorama Package သွင်းပါ',
+                'and-py-2-desc': 'Pydroid ၏ Menu bar ထဲရှိ Pip သို့သွားပြီး colorama ဟု ရိုက်ရှာကာ install နှိပ်ပါ။',
+                'and-py-3': 'Terminal ထဲတွင် Scanner Run ပါ',
+                'and-py-3-desc': 'Menu sidebar မှ Terminal ကို ရွေးချယ်ပြီး အောက်ပါ command များကို ရိုက်ထည့်၍ run ပါ -',
                 'copied': 'ကူးယူပြီးပါပြီ!'
             }
         };
@@ -714,6 +772,14 @@
 
             event.currentTarget.classList.add('active');
             document.getElementById('tab-' + platform).classList.add('active');
+        }
+
+        // Subtab switcher for Android methods
+        function switchAndroidMethod(method) {
+            document.getElementById('btn-and-pydroid').classList.toggle('active', method === 'pydroid');
+            document.getElementById('btn-and-termux').classList.toggle('active', method === 'termux');
+            document.getElementById('and-method-pydroid').style.display = method === 'pydroid' ? 'block' : 'none';
+            document.getElementById('and-method-termux').style.display = method === 'termux' ? 'block' : 'none';
         }
 
         // Copy Code
