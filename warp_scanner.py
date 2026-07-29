@@ -160,6 +160,40 @@ def save(results: list[dict], path: str) -> None:
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+def _get_int_input(prompt: str, default: int, min_val: int = 1, max_val: int | None = None) -> int:
+    try:
+        val = input(prompt).strip()
+        if not val:
+            return default
+        num = int(val)
+        if num < min_val:
+            print(f"  [!] Value too low. Using minimum: {min_val}")
+            return min_val
+        if max_val is not None and num > max_val:
+            print(f"  [!] Capping value at soft limit: {max_val}")
+            return max_val
+        return num
+    except ValueError:
+        print(f"  [!] Invalid format. Using default: {default}")
+        return default
+
+def _get_float_input(prompt: str, default: float, min_val: float = 0.1, max_val: float = 10.0) -> float:
+    try:
+        val = input(prompt).strip()
+        if not val:
+            return default
+        num = float(val)
+        if num < min_val:
+            print(f"  [!] Value too low. Using minimum: {min_val}")
+            return min_val
+        if num > max_val:
+            print(f"  [!] Capping value at soft limit: {max_val}")
+            return max_val
+        return num
+    except ValueError:
+        print(f"  [!] Invalid format. Using default: {default}")
+        return default
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -177,28 +211,36 @@ def main():
         print("\n=== WarpGen Scanner Configuration ===")
         print("Press [Enter] to use the default value.\n")
         try:
+            # 1. Limit IPs (0 for all, soft limit of 1792 total usable IPs)
             val = input("1. Limit IPs to scan [Default: 100, Enter 0 for all]: ").strip()
-            if val:
-                max_ips = int(val)
-                if max_ips == 0:
-                    max_ips = None
+            if not val:
+                max_ips = 100
+            else:
+                try:
+                    num = int(val)
+                    if num == 0:
+                        max_ips = None
+                    elif num < 0:
+                        print("  [!] Negative value. Using default: 100")
+                        max_ips = 100
+                    else:
+                        max_ips = num
+                except ValueError:
+                    print("  [!] Invalid format. Using default: 100")
+                    max_ips = 100
 
-            val = input("2. Thread count (Speed) [Default: 100]: ").strip()
-            if val:
-                workers = int(val)
+            # 2. Workers (soft max limit of 500 threads)
+            workers = _get_int_input("2. Thread count (Speed) [Default: 100, Soft Max: 500]: ", 100, 1, 500)
 
-            val = input("3. Timeout per ping (Seconds) [Default: 1.5]: ").strip()
-            if val:
-                timeout = float(val)
+            # 3. Timeout (soft max limit of 10.0 seconds)
+            timeout = _get_float_input("3. Timeout per ping (Seconds) [Default: 1.5, Soft Max: 10.0]: ", 1.5, 0.1, 10.0)
 
-            val = input("4. Top results count to show [Default: 20]: ").strip()
-            if val:
-                top = int(val)
+            # 4. Top Results (soft max limit of 100)
+            top = _get_int_input("4. Top results count to show [Default: 20, Soft Max: 100]: ", 20, 1, 100)
+
         except (KeyboardInterrupt, SystemExit):
             print("\nExiting...")
             sys.exit(0)
-        except Exception as e:
-            print(f"\nInvalid input ({e}). Using default settings.")
     else:
         p = argparse.ArgumentParser(description="Cloudflare WARP endpoint scanner")
         p.add_argument("--workers",  type=int,   default=100,  help="Parallel threads (default: 100)")
