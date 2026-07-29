@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WarpGen - Endpoint Scanner Guide</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23e8a838'/%3E%3Cpath d='M24 8l12 6v10c0 8-5.3 13.4-12 16-6.7-2.6-12-8-12-16V14z' fill='none' stroke='white' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M18 24l4 4 8-8' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <meta name="description"
+        content="Learn how to scan and find working Cloudflare WARP endpoints for your ISP/network on Windows, Linux, and Android.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-page: #f0ece4;
+            --bg-card: rgba(255, 255, 255, 0.55);
+            --bg-card-hover: rgba(255, 255, 255, 0.75);
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b6b6b;
+            --text-tertiary: #9a9a9a;
+            --accent: #e8a838;
+            --accent-dark: #c48820;
+            --accent-light: #fdf0d5;
+            --border-glass: 1px solid rgba(255, 255, 255, 0.35);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            z-index: -1;
+        }
+
+        body::before {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #e8a838, #ffc8dd);
+            top: -100px;
+            right: -100px;
+        }
+
+        body::after {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, #bde0fe, #e8a838);
+            bottom: -80px;
+            left: -80px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 var(--space-md);
+            width: 100%;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-back {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+            color: var(--accent-dark);
+            border-color: var(--accent);
+            background: var(--bg-card-hover);
+            transform: translateX(-2px);
+        }
+
+        .lang-switch {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: var(--border-glass);
+            border-radius: var(--radius-full);
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+            box-shadow: var(--shadow-card);
+        }
+
+        .lang-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 16px;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-family: inherit;
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .hero h1 {
+            font-size: 40px;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .scanner-download-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, rgba(232, 168, 56, 0.08), rgba(232, 168, 56, 0.02));
+            border: 2px dashed var(--accent);
+            border-radius: var(--radius-lg);
+            margin-bottom: 32px;
+        }
+
+        .btn-download-script {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(232, 168, 56, 0.35);
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .btn-download-script:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(232, 168, 56, 0.45);
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.04);
+            padding: 6px;
+            border-radius: var(--radius-md);
+        }
+
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--accent-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .step-item {
+            margin-bottom: 24px;
+            position: relative;
+            padding-left: 36px;
+        }
+
+        .step-num {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-light);
+            color: var(--accent-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .code-container {
+            position: relative;
+            background: #1e1e1e;
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        code {
+            font-family: 'DM Mono', monospace;
+            color: #f8f8f2;
+            font-size: 14px;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .btn-copy-code {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            color: #d8d8d8;
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy-code:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .info-alert {
+            background: rgba(232, 168, 56, 0.08);
+            border: 1px solid rgba(232, 168, 56, 0.2);
+            border-radius: var(--radius-sm);
+            padding: var(--space-md);
+            margin-top: var(--space-md);
+            display: flex;
+            gap: 12px;
+            align-items: start;
+            font-size: 14px;
+            color: var(--accent-dark);
+        }
+
+        .info-alert i {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .copy-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a1a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            font-size: 15px;
+        }
+
+        .copy-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 640px) {
+            .hero h1 {
+                font-size: 30px;
+            }
+            .platform-tabs {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="copy-toast" class="copy-toast">Copied!</div>
+
+    <div class="container">
+        <nav class="nav">
+            <a href="/" class="logo"><i data-lucide="shield-check"></i> WarpGen</a>
+            <div class="nav-actions">
+                <a href="/" class="btn-back"><i data-lucide="arrow-left" size="16"></i> <span data-t="btn-back">Home</span></a>
+                <div class="lang-switch">
+                    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                    <button class="lang-btn" onclick="setLang('mm')">MM</button>
+                </div>
+            </div>
+        </nav>
+
+        <header class="hero">
+            <h1 data-t="guide-title">WARP Endpoint Scanner</h1>
+            <p data-t="guide-subtitle">Scan & verify Cloudflare endpoints locally on your own network.</p>
+        </header>
+
+        <main>
+            <div class="card scanner-download-box">
+                <i data-lucide="terminal" size="48" style="color: var(--accent); margin-bottom: 16px;"></i>
+                <h2 style="margin: 0 0 8px 0; font-size: 20px;" data-t="download-h2">Download Scanner Script</h2>
+                <p style="color: var(--text-secondary); max-width: 500px; font-size: 14px; margin: 0 0 20px 0;" data-t="download-desc">
+                    Get the standalone Python tool. It runs safely on your system to measure the lowest latency and verify which IPs actually connect to Cloudflare WARP.
+                </p>
+                <a href="/download/scanner" class="btn-download-script" id="btn-download">
+                    <i data-lucide="download"></i>
+                    <span data-t="btn-download-file">Download warp_scanner.py</span>
+                </a>
+            </div>
+
+            <section class="card">
+                <h2 style="margin-top: 0; font-size: 22px; display: flex; align-items: center; gap: 8px;" data-t="install-title">
+                    <i data-lucide="book-open" style="color: var(--accent);"></i> Setup & Run Guide
+                </h2>
+
+                <div class="platform-tabs">
+                    <button class="tab-btn active" onclick="switchTab('windows')">
+                        <i data-lucide="monitor"></i> Windows
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('linux')">
+                        <i data-lucide="cpu"></i> Linux / macOS
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('android')">
+                        <i data-lucide="smartphone"></i> Android
+                    </button>
+                </div>
+
+                <!-- Windows -->
+                <div id="tab-windows" class="tab-content active">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-num">1</span>
+                            <div class="step-title" data-t="win-step-1">Open PowerShell or Terminal</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-1-desc">Open the folder containing your downloaded script in PowerShell or command prompt.</p>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">2</span>
+                            <div class="step-title" data-t="install-dep">Install Required Libraries</div>
+                            <div class="code-container">
+                                <code>pip install colorama</code>
+                                <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">3</span>
+                            <div class="step-title" data-t="run-script">Run the Scanner</div>
+                            <div class="code-container">
+                                <code>python warp_scanner.py</code>
+                                <button class="btn-copy-code" onclick="copyCode('python warp_scanner.py')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:8px 0 0 0;" data-t="quick-scan-note">To limit the scan size for a faster test, append <code>--max-ips 200</code> to the command.</p>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">4</span>
+                            <div class="step-title" data-t="get-results">Copy Best Endpoint</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-4-desc">The script will print the results sorted by latency and save them to a JSON file. Copy the best working IP:Port address (e.g. <code>188.114.98.30:500</code>).</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Linux -->
+                <div id="tab-linux" class="tab-content">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-num">1</span>
+                            <div class="step-title" data-t="lin-step-1">Open Terminal</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="lin-step-1-desc">Navigate to the directory where you downloaded the file.</p>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">2</span>
+                            <div class="step-title" data-t="install-dep">Install Required Libraries</div>
+                            <div class="code-container">
+                                <code>python3 -m pip install colorama</code>
+                                <button class="btn-copy-code" onclick="copyCode('python3 -m pip install colorama')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">3</span>
+                            <div class="step-title" data-t="run-script">Run the Scanner</div>
+                            <div class="code-container">
+                                <code>python3 warp_scanner.py</code>
+                                <button class="btn-copy-code" onclick="copyCode('python3 warp_scanner.py')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">4</span>
+                            <div class="step-title" data-t="get-results">Copy Best Endpoint</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="lin-step-4-desc">Copy the best IP and port from the sorted terminal output list.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Android -->
+                <div id="tab-android" class="tab-content">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-num">1</span>
+                            <div class="step-title" data-t="and-step-1">Install Termux</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="and-step-1-desc">Download Termux from F-Droid (do not use Google Play as it is outdated).</p>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">2</span>
+                            <div class="step-title" data-t="and-step-2">Update Packages & Install Python</div>
+                            <div class="code-container">
+                                <code>pkg update && pkg install python curl -y</code>
+                                <button class="btn-copy-code" onclick="copyCode('pkg update && pkg install python curl -y')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">3</span>
+                            <div class="step-title" data-t="and-step-3">Install Dependencies</div>
+                            <div class="code-container">
+                                <code>pip install colorama</code>
+                                <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">4</span>
+                            <div class="step-title" data-t="and-step-4">Download & Run Scanner</div>
+                            <div class="code-container" style="margin-bottom:8px;">
+                                <code>curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner</code>
+                                <button class="btn-copy-code" onclick="copyCode('curl -o warp_scanner.py https://warp-conf-gen.vercel.app/download/scanner')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                            <div class="code-container">
+                                <code>python warp_scanner.py --max-ips 150</code>
+                                <button class="btn-copy-code" onclick="copyCode('python warp_scanner.py --max-ips 150')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="info-alert">
+                    <i data-lucide="lightbulb" size="18"></i>
+                    <div>
+                        <strong data-t="alert-action-title">What to do next?</strong>
+                        <p style="margin: 4px 0 0 0; line-height: 1.5;" data-t="alert-action-body">
+                            Once the script finishes scanning, it will list the best working Cloudflare IP addresses. Return to the homepage, switch endpoint IP mode to <strong>Custom IP</strong>, enter the working address, and click <strong>Generate Config</strong> to get a working VPN profile.
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                'btn-back': 'Home',
+                'guide-title': 'WARP Endpoint Scanner',
+                'guide-subtitle': 'Scan & verify Cloudflare endpoints locally on your own network.',
+                'download-h2': 'Download Scanner Script',
+                'download-desc': 'Get the standalone Python tool. It runs safely on your system to measure the lowest latency and verify which IPs actually connect to Cloudflare WARP.',
+                'btn-download-file': 'Download warp_scanner.py',
+                'install-title': 'Setup & Run Guide',
+                'win-step-1': 'Open PowerShell or Terminal',
+                'win-step-1-desc': 'Open the folder containing your downloaded script in PowerShell or command prompt.',
+                'install-dep': 'Install Required Libraries',
+                'run-script': 'Run the Scanner',
+                'quick-scan-note': 'To limit the scan size for a faster test, append --max-ips 200 to the command.',
+                'get-results': 'Copy Best Endpoint',
+                'win-step-4-desc': 'The script will print the results sorted by latency and save them to a JSON file. Copy the best working IP:Port address (e.g. 188.114.98.30:500).',
+                'lin-step-1': 'Open Terminal',
+                'lin-step-1-desc': 'Navigate to the directory where you downloaded the file.',
+                'lin-step-4-desc': 'Copy the best IP and port from the sorted terminal output list.',
+                'and-step-1': 'Install Termux',
+                'and-step-1-desc': 'Download Termux from F-Droid (do not use Google Play as it is outdated).',
+                'and-step-2': 'Update Packages & Install Python',
+                'and-step-3': 'Install Dependencies',
+                'and-step-4': 'Download & Run Scanner',
+                'alert-action-title': 'What to do next?',
+                'alert-action-body': 'Once the script finishes scanning, it will list the best working Cloudflare IP addresses. Return to the homepage, switch endpoint IP mode to Custom IP, enter the working address, and click Generate Config to get a working VPN profile.',
+                'copied': 'Copied!'
+            },
+            mm: {
+                'btn-back': 'မူလစာမျက်နှာ',
+                'guide-title': 'WARP Endpoint Scanner',
+                'guide-subtitle': 'သင့်ကိုယ်ပိုင်ကွန်ရက်ပေါ်တွင် အလုပ်လုပ်သော Cloudflare endpoint များကို စကင်ဖတ်စစ်ဆေးပါ။',
+                'download-h2': 'Scanner Script ဒေါင်းလုဒ်လုပ်ရန်',
+                'download-desc': 'သင့်ကွန်ပျူတာ သို့မဟုတ် ဖုန်းထဲတွင် သီးသန့် run နိုင်သော Python tool ဖြစ်သည်။ နှောင့်နှေးမှုအနည်းဆုံးနှင့် တကယ်အလုပ်လုပ်သော Cloudflare WARP IP များကို ဘေးကင်းစွာ စစ်ဆေးပေးနိုင်ပါသည်။',
+                'btn-download-file': 'warp_scanner.py ကိုဒေါင်းလုဒ်လုပ်ရန်',
+                'install-title': 'အဆင့်ဆင့် အသုံးပြုနည်း လမ်းညွှန်',
+                'win-step-1': 'PowerShell သို့မဟုတ် Terminal ကိုဖွင့်ပါ',
+                'win-step-1-desc': 'ဒေါင်းလုဒ်လုပ်ထားသော script ရှိသည့် ဖိုင်တွဲထဲတွင် PowerShell သို့မဟုတ် Command Prompt ကို ဖွင့်ပါ။',
+                'install-dep': 'လိုအပ်သော Libraries များကိုသွင်းပါ',
+                'run-script': 'Scanner ကို Run မည်',
+                'quick-scan-note': 'ပိုမိုမြန်ဆန်စွာ စစ်ဆေးနိုင်ရန် scan ပမာဏကို ကန့်သတ်လိုပါက command နောက်တွင် --max-ips 200 ကို ထည့်ပေးပါ။',
+                'get-results': 'အကောင်းဆုံး Endpoint ကို ကူးယူပါ',
+                'win-step-4-desc': 'Script ပြီးဆုံးပါက latency အနိမ့်ဆုံး IP များကို အစဉ်လိုက်ဖော်ပြပေးမည်ဖြစ်ပြီး JSON ဖိုင်ထဲသိမ်းပေးမည်ဖြစ်သည်။ အကောင်းဆုံး IP:Port လိပ်စာ (ဥပမာ 188.114.98.30:500) ကို ကူးယူပါ။',
+                'lin-step-1': 'Terminal ဖွင့်ပါ',
+                'lin-step-1-desc': 'ဒေါင်းလုဒ်လုပ်ထားသော ဖိုင်ရှိရာ လမ်းကြောင်းသို့ သွားပါ။',
+                'lin-step-4-desc': 'ပြသလာသော စာရင်းထဲမှ အလုပ်အလုပ်ဆုံး IP နှင့် port ကို ကူးယူပါ။',
+                'and-step-1': 'Termux ကို ထည့်သွင်းပါ',
+                'and-step-1-desc': 'Termux app ကို F-Droid မှ ဒေါင်းလုဒ်ဆွဲပါ (Google Play ဗားရှင်းသည် အပ်ဒိတ်မဖြစ်သဖြင့် အသုံးမပြုပါနှင့်)။',
+                'and-step-2': 'Package များ အပ်ဒိတ်လုပ်ပြီး Python သွင်းပါ',
+                'and-step-3': 'Dependencies များ သွင်းယူပါ',
+                'and-step-4': 'Scanner ကို ဒေါင်းလုဒ်လုပ်ပြီး Run ပါ',
+                'alert-action-title': 'နောက်ထပ် ဘာလုပ်ရမလဲ?',
+                'alert-action-body': 'Script သည် စကင်ဖတ်ပြီးပါက အလုပ်လုပ်သော Cloudflare IP များကို ပြပေးမည်။ မူလစာမျက်နှာသို့ပြန်သွားပြီး IP Mode ကို Custom IP သို့ပြောင်းပါ။ ရရှိလာသော IP ကိုရိုက်ထည့်ပြီး Generate Config ခလုတ်ကိုနှိပ်ကာ အလုပ်လုပ်သော VPN profile ကို ရယူပါ။',
+                'copied': 'ကူးယူပြီးပါပြီ!'
+            }
+        };
+
+        function setLang(lang) {
+            localStorage.setItem('pref_lang', lang);
+            document.querySelectorAll('.lang-btn').forEach(function (b) {
+                b.classList.toggle('active', b.innerText.toLowerCase() === lang);
+            });
+
+            document.querySelectorAll('[data-t]').forEach(function (el) {
+                const key = el.getAttribute('data-t');
+                if (translations[lang][key]) {
+                    el.innerText = translations[lang][key];
+                }
+            });
+        }
+
+        // Init Language
+        const savedLang = localStorage.getItem('pref_lang') || 'en';
+        setLang(savedLang);
+
+        // Tab switcher
+        function switchTab(platform) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + platform).classList.add('active');
+        }
+
+        // Copy Code
+        function copyCode(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(savedLang === 'mm' ? translations.mm.copied : translations.en.copied);
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('copy-toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

@@ -32,6 +32,7 @@ Thumbs.db
 warp-*.conf
 warp-*.png
 warpgen_stats.json
+warp_results_*.json
 local_tools/*
 
 # Agent workflows

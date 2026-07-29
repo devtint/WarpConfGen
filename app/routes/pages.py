@@ -13,6 +13,8 @@ from app.services.stats import get_local_count, get_supabase_stats
 import os
 from pathlib import Path
 
+from fastapi.responses import HTMLResponse, FileResponse
+
 # Vercel and local path resolution
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 possible_dirs = [
@@ -52,3 +54,29 @@ async def index(request: Request):
             "known_ips": settings.known_warp_ips,
         },
     )
+
+
+@router.get("/scanner", response_class=HTMLResponse)
+async def scanner_page(request: Request):
+    """Serve the WarpGen Endpoint Scanner guide page."""
+    return templates.TemplateResponse(
+        request,
+        "scanner.html",
+        {
+            "request": request,
+        },
+    )
+
+
+@router.get("/download/scanner")
+async def download_scanner():
+    """Download the warp_scanner.py Python script."""
+    filepath = Path(BASE_DIR) / "warp_scanner.py"
+    if filepath.is_file():
+        return FileResponse(
+            path=filepath,
+            filename="warp_scanner.py",
+            media_type="application/octet-stream",
+        )
+    return {"error": "File not found"}
+

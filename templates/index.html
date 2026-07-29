@@ -640,9 +640,15 @@
     <div class="container">
         <nav class="nav">
             <div class="logo"><i data-lucide="shield-check"></i> WarpGen</div>
-            <div class="lang-switch">
-                <button class="lang-btn active" onclick="setLang('en')">EN</button>
-                <button class="lang-btn" onclick="setLang('mm')">MM</button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="/scanner" class="btn-scanner" style="text-decoration: none; color: var(--accent-dark); font-weight: 600; display: flex; align-items: center; gap: 6px; font-size: 15px; border: 1.5px solid var(--accent); padding: 8px 16px; border-radius: var(--radius-full); background: rgba(232, 168, 56, 0.05); transition: all 0.2s ease;">
+                    <i data-lucide="search" size="16"></i>
+                    <span data-t="nav-scanner">Endpoint Scanner</span>
+                </a>
+                <div class="lang-switch">
+                    <button class="lang-btn active" onclick="setLang('en')">EN</button>
+                    <button class="lang-btn" onclick="setLang('mm')">MM</button>
+                </div>
             </div>
         </nav>
 
@@ -906,7 +912,8 @@
                 'f-contact': 'Contact',
                 'f-group': 'Telegram Group',
                 'f-github': 'GitHub',
-                'tip-mm': 'Tip for Myanmar Users: Default IPs are often blocked by ISPs. If you cannot connect, use a scanner tool to find a Working IP and enter it here.',
+                'tip-mm': 'Tip for Myanmar Users: Default IPs are often blocked by ISPs. If you cannot connect, use our <a href="/scanner" style="color: var(--accent-dark); font-weight: 700; text-decoration: underline;">Endpoint Scanner</a> to find a Working IP and enter it here.',
+                'nav-scanner': 'Endpoint Scanner',
                 'gen-wait': 'Registering Identity with Cloudflare...',
                 'btn-download': 'Download .conf',
                 'btn-copy': 'Copy Config',
@@ -958,7 +965,8 @@
                 'f-contact': 'ဆက်သွယ်ရန်',
                 'f-group': 'တယ်လီဂရမ်အုပ်စု',
                 'f-github': 'GitHub',
-                'tip-mm': 'မြန်မာအသုံးပြုသူများအတွက် - ISP များမှ Cloudflare IP များကို ပိတ်ထားလေ့ရှိပါသည်။ အကယ်၍ ချိတ်ဆက်မရပါက Scanner tool ဖြင့် အလုပ်လုပ်သော IP ကိုရှာပြီး ဤနေရာတွင် ထည့်သွင်းပါ။',
+                'tip-mm': 'မြန်မာအသုံးပြုသူများအတွက် - ISP များမှ Cloudflare IP များကို ပိတ်ထားလေ့ရှိပါသည်။ အကယ်၍ ချိတ်ဆက်မရပါက ကျွန်ုပ်တို့၏ <a href="/scanner" style="color: var(--accent-dark); font-weight: 700; text-decoration: underline;">Endpoint Scanner</a> ဖြင့် အလုပ်လုပ်သော IP ကိုရှာပြီး ဤနေရာတွင် ထည့်သွင်းပါ။',
+                'nav-scanner': 'Scanner အသုံးပြုနည်း',
                 'gen-wait': 'Cloudflare တွင် မှတ်ပုံတင်နေပါသည်...',
                 'btn-download': '.conf ဖိုင်ဒေါင်းမည်',
                 'btn-copy': 'Config ကူးယူမည်',
@@ -993,7 +1001,7 @@
             document.querySelectorAll('[data-t]').forEach(function (el) {
                 const key = el.getAttribute('data-t');
                 if (translations[lang][key]) {
-                    el.innerText = translations[lang][key];
+                    el.innerHTML = translations[lang][key];
                 }
             });
         }
