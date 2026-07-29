@@ -270,16 +270,42 @@
 
         .tab-content {
             display: none;
-            animation: fadeIn 0.3s ease-out;
+            opacity: 0;
         }
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Staggered load animations */
+        .animate-fade-in {
+            animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .step-list {
@@ -422,13 +448,13 @@
             </div>
         </nav>
 
-        <header class="hero">
+        <header class="hero animate-fade-in">
             <h1 data-t="guide-title">WARP Endpoint Scanner</h1>
             <p data-t="guide-subtitle">Scan & verify Cloudflare endpoints locally on your own network.</p>
         </header>
 
         <main>
-            <div class="card scanner-download-box">
+            <div class="card scanner-download-box animate-fade-in delay-1">
                 <i data-lucide="terminal" size="48" style="color: var(--accent); margin-bottom: 16px;"></i>
                 <h2 style="margin: 0 0 8px 0; font-size: 20px;" data-t="download-h2">Download Scanner Script</h2>
                 <p style="color: var(--text-secondary); max-width: 500px; font-size: 14px; margin: 0 0 20px 0;" data-t="download-desc">
@@ -440,7 +466,7 @@
                 </a>
             </div>
 
-            <section class="card">
+            <section class="card animate-fade-in delay-2">
                 <h2 style="margin-top: 0; font-size: 22px; display: flex; align-items: center; gap: 8px;" data-t="install-title">
                     <i data-lucide="book-open" style="color: var(--accent);"></i> Setup & Run Guide
                 </h2>
@@ -472,6 +498,7 @@
                                 <code>pip install colorama</code>
                                 <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
                             </div>
+                            <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
                         </li>
                         <li class="step-item">
                             <span class="step-num">3</span>
@@ -505,6 +532,7 @@
                                 <code>python3 -m pip install colorama</code>
                                 <button class="btn-copy-code" onclick="copyCode('python3 -m pip install colorama')"><i data-lucide="copy" size="16"></i></button>
                             </div>
+                            <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
                         </li>
                         <li class="step-item">
                             <span class="step-num">3</span>
@@ -545,6 +573,7 @@
                                 <code>pip install colorama</code>
                                 <button class="btn-copy-code" onclick="copyCode('pip install colorama')"><i data-lucide="copy" size="16"></i></button>
                             </div>
+                            <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
                         </li>
                         <li class="step-item">
                             <span class="step-num">4</span>
@@ -601,6 +630,7 @@
                 'and-step-4': 'Download & Run Scanner',
                 'alert-action-title': 'What to do next?',
                 'alert-action-body': 'Once the script finishes scanning, it will list the best working Cloudflare IP addresses. Return to the homepage, switch endpoint IP mode to Custom IP, enter the working address, and click Generate Config to get a working VPN profile.',
+                'dep-reminder': 'Note: Standard Python libraries are pre-installed. Only colorama is optional for colored output.',
                 'copied': 'Copied!'
             },
             mm: {
@@ -628,6 +658,7 @@
                 'and-step-4': 'Scanner ကို ဒေါင်းလုဒ်လုပ်ပြီး Run ပါ',
                 'alert-action-title': 'နောက်ထပ် ဘာလုပ်ရမလဲ?',
                 'alert-action-body': 'Script သည် စကင်ဖတ်ပြီးပါက အလုပ်လုပ်သော Cloudflare IP များကို ပြပေးမည်။ မူလစာမျက်နှာသို့ပြန်သွားပြီး IP Mode ကို Custom IP သို့ပြောင်းပါ။ ရရှိလာသော IP ကိုရိုက်ထည့်ပြီး Generate Config ခလုတ်ကိုနှိပ်ကာ အလုပ်လုပ်သော VPN profile ကို ရယူပါ။',
+                'dep-reminder': 'မှတ်ချက် - Python ၏ အခြေခံ libraries များသည် အသင့်ပါဝင်ပြီးဖြစ်၍ colorama မှာ စာလုံးအရောင်ပြသရန်အတွက်သာဖြစ်ပြီး မသွင်းသော်လည်း စကင်ဖတ်နိုင်ပါသည်။',
                 'copied': 'ကူးယူပြီးပါပြီ!'
             }
         };
@@ -641,7 +672,7 @@
             document.querySelectorAll('[data-t]').forEach(function (el) {
                 const key = el.getAttribute('data-t');
                 if (translations[lang][key]) {
-                    el.innerText = translations[lang][key];
+                    el.innerHTML = translations[lang][key];
                 }
             });
         }
