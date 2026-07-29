@@ -650,6 +650,37 @@
                     </div>
                 </div>
 
+                <!-- CLI Flags Options -->
+                <div style="margin-top: 32px; border-top: 1px solid rgba(0, 0, 0, 0.08); padding-top: 24px; margin-bottom: 24px;">
+                    <h3 style="margin-top:0; font-size:18px; display:flex; align-items:center; gap:8px;" data-t="flags-title">
+                        <i data-lucide="settings" style="color:var(--accent);"></i> Advanced Options (CLI Flags)
+                    </h3>
+                    <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;" data-t="flags-desc">
+                        You can customize how the scanner behaves by adding these optional flags when running the command:
+                    </p>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <div style="background:rgba(0,0,0,0.02); padding:12px 16px; border-radius:var(--radius-sm); border:1.5px solid rgba(0,0,0,0.03);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <strong style="font-family:'DM Mono', monospace; font-size:14px; color:var(--accent-dark);">--max-ips &lt;number&gt;</strong>
+                                <span style="font-size:12px; color:var(--accent-dark); font-weight:700; background:var(--accent-light); padding:2px 8px; border-radius:var(--radius-full);" data-t="flag-rec">Recommended</span>
+                            </div>
+                            <p style="margin:0; font-size:13px; color:var(--text-secondary);" data-t="flag-max-ips-desc">Limits the number of scanned IPs (e.g. --max-ips 150). Use this to finish the scan much faster.</p>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.02); padding:12px 16px; border-radius:var(--radius-sm); border:1.5px solid rgba(0,0,0,0.03);">
+                            <strong style="font-family:'DM Mono', monospace; font-size:14px; color:var(--accent-dark); display:block; margin-bottom:4px;">--workers &lt;number&gt;</strong>
+                            <p style="margin:0; font-size:13px; color:var(--text-secondary);" data-t="flag-workers-desc">Sets parallel threads (default: 100). Higher values scan faster but require more CPU and bandwidth.</p>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.02); padding:12px 16px; border-radius:var(--radius-sm); border:1.5px solid rgba(0,0,0,0.03);">
+                            <strong style="font-family:'DM Mono', monospace; font-size:14px; color:var(--accent-dark); display:block; margin-bottom:4px;">--timeout &lt;seconds&gt;</strong>
+                            <p style="margin:0; font-size:13px; color:var(--text-secondary);" data-t="flag-timeout-desc">Ping timeout per IP in seconds (default: 1.5). Increase this if your internet connection is very slow or unstable.</p>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.02); padding:12px 16px; border-radius:var(--radius-sm); border:1.5px solid rgba(0,0,0,0.03);">
+                            <strong style="font-family:'DM Mono', monospace; font-size:14px; color:var(--accent-dark); display:block; margin-bottom:4px;">--top &lt;number&gt;</strong>
+                            <p style="margin:0; font-size:13px; color:var(--text-secondary);" data-t="flag-top-desc">Sets how many top working results to show in the final summary table (default: 20).</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="info-alert">
                     <i data-lucide="lightbulb" size="18"></i>
                     <div>
@@ -701,6 +732,13 @@
                 'and-py-2-desc': 'Open Pydroid 3, open the left sidebar menu, select "Pip", search for "colorama", and tap install.',
                 'and-py-3': 'Run Scanner in Terminal',
                 'and-py-3-desc': 'Open the left sidebar menu, select "Terminal", and run the following commands:',
+                'flags-title': 'Advanced Options (CLI Flags)',
+                'flags-desc': 'You can customize how the scanner behaves by adding these optional flags when running the command:',
+                'flag-rec': 'Recommended',
+                'flag-max-ips-desc': 'Limits the number of scanned IPs (e.g. --max-ips 150). Use this to finish the scan much faster.',
+                'flag-workers-desc': 'Sets parallel threads (default: 100). Higher values scan faster but require more CPU and bandwidth.',
+                'flag-timeout-desc': 'Ping timeout per IP in seconds (default: 1.5). Increase this if your internet connection is very slow or unstable.',
+                'flag-top-desc': 'Sets how many top working results to show in the final summary table (default: 20).',
                 'copied': 'Copied!'
             },
             mm: {
@@ -739,6 +777,13 @@
                 'and-py-2-desc': 'Pydroid ၏ Menu bar ထဲရှိ Pip သို့သွားပြီး colorama ဟု ရိုက်ရှာကာ install နှိပ်ပါ။',
                 'and-py-3': 'Terminal ထဲတွင် Scanner Run ပါ',
                 'and-py-3-desc': 'Menu sidebar မှ Terminal ကို ရွေးချယ်ပြီး အောက်ပါ command များကို ရိုက်ထည့်၍ run ပါ -',
+                'flags-title': 'အဆင့်မြင့်ရွေးချယ်မှုများ (Command Flags)',
+                'flags-desc': 'Command ရိုက်သည့်အခါ အောက်ပါ flags များကို ထည့်သွင်းပြီး scanner အလုပ်လုပ်ပုံကို စိတ်ကြိုက်ပြင်ဆင်နိုင်ပါသည် -',
+                'flag-rec': 'အကြံပြုချက်',
+                'flag-max-ips-desc': 'စကင်ဖတ်မည့် IP အရေအတွက်ကို ကန့်သတ်ရန် (ဥပမာ --max-ips 150)။ စကင်ဖတ်ချိန် ပိုမိုမြန်ဆန်စေရန် ဤ flag ကို သုံးပါ။',
+                'flag-workers-desc': 'တစ်ပြိုင်နက်အလုပ်လုပ်မည့် thread အရေအတွက် (မူလ - 100)။ ပိုများပါက ပိုမြန်သော်လည်း internet bandwidth နှင့် CPU ပိုသုံးပါမည်။',
+                'flag-timeout-desc': 'IP တစ်ခုချင်းစီ စောင့်ဆိုင်းမည့်စက္ကန့် (မူလ - 1.5)။ သင့်အင်တာနက် အရမ်းနှေး သို့မဟုတ် မတည်ငြိမ်ပါက ဤဂဏန်းကို တိုးပေးပါ။',
+                'flag-top-desc': 'စကင်ဖတ်ပြီးနောက် အမြန်ဆုံးထွက်လာသည့် IP မည်မျှကို ဇယားတွင် ပြသပေးရမည်နည်းကို သတ်မှတ်ရန် (မူလ - 20)။',
                 'copied': 'ကူးယူပြီးပါပြီ!'
             }
         };
