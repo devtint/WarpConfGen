@@ -74,7 +74,7 @@ _found   = 0
 def _bar(total: int) -> None:
     pct    = _done / total * 100
     filled = int(30 * _done / total)
-    bar    = "█" * filled + "░" * (30 - filled)
+    bar    = "#" * filled + "." * (30 - filled)
     sys.stdout.write(
         f"\r  [{bar}] {pct:5.1f}%  {_done}/{total}  "
         f"found {Fore.GREEN}{_found}{Style.RESET_ALL}   "
@@ -100,7 +100,7 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
 
     print(f"\n  Scanning {total:,} IPs  |  ports: {ports}  |  workers: {workers}\n")
     print(f"  {'Endpoint':<24}  {'Latency':>9}  Quality")
-    print("  " + "─" * 50)
+    print("  " + "-" * 50)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(ping_ip, ip, timeout): ip for ip in ips}
@@ -140,7 +140,7 @@ def summary(results: list[dict]) -> None:
     print(f"  TOP WARP ENDPOINTS FOR YOUR NETWORK")
     print(f"  {'='*55}")
     print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  Quality")
-    print(f"  {'─'*52}")
+    print(f"  {'-'*52}")
 
     for i, r in enumerate(results, 1):
         lat   = r["latency_ms"]
