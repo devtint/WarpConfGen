@@ -164,19 +164,60 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    p = argparse.ArgumentParser(description="Cloudflare WARP endpoint scanner")
-    p.add_argument("--workers",  type=int,   default=100,  help="Parallel threads (default: 100)")
-    p.add_argument("--timeout",  type=float, default=1.5,  help="Ping timeout seconds (default: 1.5)")
-    p.add_argument("--max-ips",  type=int,   default=None, help="Limit number of IPs to scan")
-    p.add_argument("--top",      type=int,   default=20,   help="Top N results (default: 20)")
-    p.add_argument("--out",      type=str,   default=None, help="Save results to JSON file")
-    args = p.parse_args()
+    # Set default scanner configurations
+    workers = 100
+    timeout = 1.5
+    max_ips = 100  # Default to 100 for fast mobile scans when run interactively
+    top = 20
+    out = None
 
-    results = scan(CF_RANGES, CF_PORTS, args.workers, args.timeout, args.max_ips, args.top)
+    # If no flags are provided (e.g. when run via GUI run button in Pydroid 3),
+    # prompt the user interactively inside the terminal.
+    if len(sys.argv) == 1:
+        print("\n=== WarpGen Scanner Configuration ===")
+        print("Press [Enter] to use the default value.\n")
+        try:
+            val = input("1. Limit IPs to scan [Default: 100, Enter 0 for all]: ").strip()
+            if val:
+                max_ips = int(val)
+                if max_ips == 0:
+                    max_ips = None
+
+            val = input("2. Thread count (Speed) [Default: 100]: ").strip()
+            if val:
+                workers = int(val)
+
+            val = input("3. Timeout per ping (Seconds) [Default: 1.5]: ").strip()
+            if val:
+                timeout = float(val)
+
+            val = input("4. Top results count to show [Default: 20]: ").strip()
+            if val:
+                top = int(val)
+        except (KeyboardInterrupt, SystemExit):
+            print("\nExiting...")
+            sys.exit(0)
+        except Exception as e:
+            print(f"\nInvalid input ({e}). Using default settings.")
+    else:
+        p = argparse.ArgumentParser(description="Cloudflare WARP endpoint scanner")
+        p.add_argument("--workers",  type=int,   default=100,  help="Parallel threads (default: 100)")
+        p.add_argument("--timeout",  type=float, default=1.5,  help="Ping timeout seconds (default: 1.5)")
+        p.add_argument("--max-ips",  type=int,   default=None, help="Limit number of IPs to scan")
+        p.add_argument("--top",      type=int,   default=20,   help="Top N results (default: 20)")
+        p.add_argument("--out",      type=str,   default=None, help="Save results to JSON file")
+        args = p.parse_args()
+        workers = args.workers
+        timeout = args.timeout
+        max_ips = args.max_ips
+        top = args.top
+        out = args.out
+
+    results = scan(CF_RANGES, CF_PORTS, workers, timeout, max_ips, top)
     summary(results)
 
-    out = args.out or f"warp_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    save(results, out)
+    out_file = out or f"warp_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    save(results, out_file)
 
 if __name__ == "__main__":
     main()
