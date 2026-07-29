@@ -488,11 +488,16 @@
                     <ul class="step-list">
                         <li class="step-item">
                             <span class="step-num">1</span>
+                            <div class="step-title" data-t="win-step-py">Install Python (if needed)</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-py-desc">Open Command Prompt and type <code>python</code>. If it is not installed, Windows 10/11 will automatically redirect you to the Microsoft Store to install it. Alternatively, download it from python.org.</p>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">2</span>
                             <div class="step-title" data-t="win-step-1">Open PowerShell or Terminal</div>
                             <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-1-desc">Open the folder containing your downloaded script in PowerShell or command prompt.</p>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">2</span>
+                            <span class="step-num">3</span>
                             <div class="step-title" data-t="install-dep">Install Required Libraries</div>
                             <div class="code-container">
                                 <code>pip install colorama</code>
@@ -501,7 +506,7 @@
                             <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">3</span>
+                            <span class="step-num">4</span>
                             <div class="step-title" data-t="run-script">Run the Scanner</div>
                             <div class="code-container">
                                 <code>python warp_scanner.py</code>
@@ -510,7 +515,7 @@
                             <p style="color:var(--text-secondary); font-size:14px; margin:8px 0 0 0;" data-t="quick-scan-note">To limit the scan size for a faster test, append <code>--max-ips 200</code> to the command.</p>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">4</span>
+                            <span class="step-num">5</span>
                             <div class="step-title" data-t="get-results">Copy Best Endpoint</div>
                             <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="win-step-4-desc">The script will print the results sorted by latency and save them to a JSON file. Copy the best working IP:Port address (e.g. <code>188.114.98.30:500</code>).</p>
                         </li>
@@ -522,11 +527,20 @@
                     <ul class="step-list">
                         <li class="step-item">
                             <span class="step-num">1</span>
+                            <div class="step-title" data-t="lin-step-py">Install Python & Pip (if needed)</div>
+                            <p style="color:var(--text-secondary); font-size:14px; margin:0 0 8px 0;" data-t="lin-step-py-desc">Ensure python3 and pip are installed. On Ubuntu/Debian, run:</p>
+                            <div class="code-container">
+                                <code>sudo apt update && sudo apt install python3 python3-pip -y</code>
+                                <button class="btn-copy-code" onclick="copyCode('sudo apt update && sudo apt install python3 python3-pip -y')"><i data-lucide="copy" size="16"></i></button>
+                            </div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-num">2</span>
                             <div class="step-title" data-t="lin-step-1">Open Terminal</div>
                             <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="lin-step-1-desc">Navigate to the directory where you downloaded the file.</p>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">2</span>
+                            <span class="step-num">3</span>
                             <div class="step-title" data-t="install-dep">Install Required Libraries</div>
                             <div class="code-container">
                                 <code>python3 -m pip install colorama</code>
@@ -535,7 +549,7 @@
                             <p style="color:var(--text-tertiary); font-size:13px; margin:6px 0 0 0;" data-t="dep-reminder">Note: Standard python libraries are pre-installed. Only colorama is optional for colored output.</p>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">3</span>
+                            <span class="step-num">4</span>
                             <div class="step-title" data-t="run-script">Run the Scanner</div>
                             <div class="code-container">
                                 <code>python3 warp_scanner.py</code>
@@ -543,7 +557,7 @@
                             </div>
                         </li>
                         <li class="step-item">
-                            <span class="step-num">4</span>
+                            <span class="step-num">5</span>
                             <div class="step-title" data-t="get-results">Copy Best Endpoint</div>
                             <p style="color:var(--text-secondary); font-size:14px; margin:0;" data-t="lin-step-4-desc">Copy the best IP and port from the sorted terminal output list.</p>
                         </li>
@@ -631,6 +645,10 @@
                 'alert-action-title': 'What to do next?',
                 'alert-action-body': 'Once the script finishes scanning, it will list the best working Cloudflare IP addresses. Return to the homepage, switch endpoint IP mode to Custom IP, enter the working address, and click Generate Config to get a working VPN profile.',
                 'dep-reminder': 'Note: Standard Python libraries are pre-installed. Only colorama is optional for colored output.',
+                'win-step-py': 'Install Python (if needed)',
+                'win-step-py-desc': 'Open Command Prompt and type python. If it is not installed, Windows 10/11 will automatically redirect you to the Microsoft Store to install it. Alternatively, download it from python.org.',
+                'lin-step-py': 'Install Python & Pip (if needed)',
+                'lin-step-py-desc': 'Ensure python3 and pip are installed. On Ubuntu/Debian, run:',
                 'copied': 'Copied!'
             },
             mm: {
@@ -659,6 +677,10 @@
                 'alert-action-title': 'နောက်ထပ် ဘာလုပ်ရမလဲ?',
                 'alert-action-body': 'Script သည် စကင်ဖတ်ပြီးပါက အလုပ်လုပ်သော Cloudflare IP များကို ပြပေးမည်။ မူလစာမျက်နှာသို့ပြန်သွားပြီး IP Mode ကို Custom IP သို့ပြောင်းပါ။ ရရှိလာသော IP ကိုရိုက်ထည့်ပြီး Generate Config ခလုတ်ကိုနှိပ်ကာ အလုပ်လုပ်သော VPN profile ကို ရယူပါ။',
                 'dep-reminder': 'မှတ်ချက် - Python ၏ အခြေခံ libraries များသည် အသင့်ပါဝင်ပြီးဖြစ်၍ colorama မှာ စာလုံးအရောင်ပြသရန်အတွက်သာဖြစ်ပြီး မသွင်းသော်လည်း စကင်ဖတ်နိုင်ပါသည်။',
+                'win-step-py': 'Python သွင်းယူပါ (မရှိသေးပါက)',
+                'win-step-py-desc': 'Command Prompt ကိုဖွင့်ပြီး python ဟုရိုက်ပါ။ မရှိပါက Windows 10/11 မှ Microsoft Store သို့ တိုက်ရိုက်ခေါ်သွားပြီး install လုပ်ခိုင်းပါလိမ့်မည်။ သို့မဟုတ် python.org မှ ဒေါင်းလုဒ်လုပ်ပါ။',
+                'lin-step-py': 'Python နှင့် Pip သွင်းယူပါ (မရှိသေးပါက)',
+                'lin-step-py-desc': 'စနစ်ထဲတွင် python3 နှင့် pip သွင်းထားပြီးဖြစ်ရပါမည်။ Ubuntu/Debian တွင် အောက်ပါ command ကို Run ပါ -',
                 'copied': 'ကူးယူပြီးပါပြီ!'
             }
         };
