@@ -107,7 +107,7 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
     results = []
 
     print(f"\n  Scanning {total:,} IPs  |  ports: {ports}  |  workers: {workers}\n")
-    print(f"  {'Endpoint':<24}  {'Latency':>9}  {'TCP':<4}  Quality")
+    print(f"  {'Endpoint':<24}  {'Latency':>9}  {'UDP':<4}  Quality")
     print("  " + "-" * 58)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -147,9 +147,9 @@ def summary(results: list[dict]) -> None:
 
     print(f"\n  {'='*63}")
     print(f"  {Fore.CYAN}{Style.BRIGHT}TOP WARP ENDPOINTS FOR YOUR NETWORK{Style.RESET_ALL}")
-    print(f"  (TCP 443 verified to ensure ISP isn't spoofing the connection)")
+    print(f"  (True UDP WireGuard Handshake Validated)")
     print(f"  {'='*63}")
-    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  {'TCP':<4}  Quality")
+    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  {'UDP':<4}  Quality")
     print(f"  {'-'*61}")
 
     for i, r in enumerate(results, 1):
