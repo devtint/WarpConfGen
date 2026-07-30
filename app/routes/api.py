@@ -14,6 +14,11 @@ logger = structlog.get_logger()
 
 router = APIRouter(prefix="/api")
 
+@router.get("/scanner/version")
+async def scanner_version():
+    """Returns the latest version of the WARP scanner script."""
+    return {"version": "2.0"}
+
 
 import base64
 from fastapi.responses import PlainTextResponse

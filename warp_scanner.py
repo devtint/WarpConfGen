@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
+import socket
 import re
 import subprocess
 import sys
@@ -30,6 +31,8 @@ except ImportError:
         GREEN = YELLOW = RED = CYAN = RESET = ""
     class Style:
         BRIGHT = RESET_ALL = ""
+
+SCRIPT_VERSION = "2.0"
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
@@ -50,20 +53,33 @@ CF_PORTS = [500, 2408, 1701, 4500]
 def ping_ip(ip: str, timeout: float) -> float | None:
     """Ping an IP and return average latency in ms, or None if unreachable."""
     if sys.platform == "win32":
-        cmd = ["ping", "-n", "2", "-w", str(int(timeout * 1000)), ip]
-        pat = re.compile(r"Average\s*=\s*(\d+)ms", re.IGNORECASE)
+        cmd = ["ping", "-n", "1", "-w", str(int(timeout * 1000)), ip]
+        pat = re.compile(r"time[=<](\d+)ms", re.IGNORECASE)
     else:
-        cmd = ["ping", "-c", "2", "-W", str(int(timeout)), ip]
-        pat = re.compile(r"[\d.]+/([\d.]+)/[\d.]+")
+        cmd = ["ping", "-c", "1", "-W", str(int(timeout)), ip]
+        pat = re.compile(r"time=([\d.]+)\s*ms", re.IGNORECASE)
 
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout * 3 + 2)
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 1)
         if r.returncode != 0:
             return None
         m = pat.search(r.stdout)
         return float(m.group(1)) if m else None
     except Exception:
         return None
+
+def probe_ip(ip: str, timeout: float) -> float | None:
+    """Probes IP via Ping, then does a secondary TCP 443 check to filter out fake ISP pings."""
+    latency = ping_ip(ip, timeout)
+    if latency is not None:
+        try:
+            # Secondary check: If TCP 443 connects, the IP is truly reachable.
+            # This filters out ISPs that spoof ICMP replies while blocking actual traffic.
+            with socket.create_connection((ip, 443), timeout=timeout):
+                return latency
+        except Exception:
+            return None
+    return None
 
 # ── Scan ─────────────────────────────────────────────────────────────────────
 
@@ -99,11 +115,11 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
     results = []
 
     print(f"\n  Scanning {total:,} IPs  |  ports: {ports}  |  workers: {workers}\n")
-    print(f"  {'Endpoint':<24}  {'Latency':>9}  Quality")
-    print("  " + "-" * 50)
+    print(f"  {'Endpoint':<24}  {'Latency':>9}  {'TCP':<4}  Quality")
+    print("  " + "-" * 58)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {pool.submit(ping_ip, ip, timeout): ip for ip in ips}
+        futures = {pool.submit(probe_ip, ip, timeout): ip for ip in ips}
         for future in as_completed(futures):
             ip      = futures[future]
             latency = future.result()
@@ -111,23 +127,21 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
                 _done += 1
                 if latency is not None:
                     _found += 1
-                    for port in ports:
-                        results.append({"ip": ip, "port": port,
-                                        "endpoint": f"{ip}:{port}",
-                                        "latency_ms": round(latency, 1)})
+                    results.append({"ip": ip, "endpoint": f"{ip}:2408",
+                                    "latency_ms": round(latency, 1)})
                     
                     # Print first port status as preview in real-time
                     lat   = latency
                     color = Fore.GREEN if lat < 80 else Fore.YELLOW if lat < 200 else Fore.RED
                     qual  = "Excellent" if lat < 80 else "Good" if lat < 200 else "Fair" if lat < 400 else "Slow"
                     
-                    sys.stdout.write("\r" + " " * 70 + "\r")
-                    print(f"  {color}{ip:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {qual}")
+                    sys.stdout.write("\r" + " " * 75 + "\r")
+                    print(f"  {color}{ip:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  PASS  {qual}")
                 
                 if _done % 5 == 0 or _done == total:
                     _bar(total)
 
-    sys.stdout.write("\r" + " " * 70 + "\r")
+    sys.stdout.write("\r" + " " * 75 + "\r")
     results.sort(key=lambda r: r["latency_ms"])
     return results[:top_n]
 
@@ -139,17 +153,18 @@ def summary(results: list[dict]) -> None:
         print("  Try: --timeout 3.0  or  --workers 20\n")
         return
 
-    print(f"\n  {'='*55}")
-    print(f"  TOP WARP ENDPOINTS FOR YOUR NETWORK")
-    print(f"  {'='*55}")
-    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  Quality")
-    print(f"  {'-'*52}")
+    print(f"\n  {'='*63}")
+    print(f"  {Fore.CYAN}{Style.BRIGHT}TOP WARP ENDPOINTS FOR YOUR NETWORK{Style.RESET_ALL}")
+    print(f"  (TCP 443 verified to ensure ISP isn't spoofing the connection)")
+    print(f"  {'='*63}")
+    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  {'TCP':<4}  Quality")
+    print(f"  {'-'*61}")
 
     for i, r in enumerate(results, 1):
         lat   = r["latency_ms"]
         color = Fore.GREEN if lat < 80 else Fore.YELLOW if lat < 200 else Fore.RED
         qual  = "Excellent" if lat < 80 else "Good" if lat < 200 else "Fair" if lat < 400 else "Slow"
-        print(f"  {i:<4} {color}{r['endpoint']:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {qual}")
+        print(f"  {i:<4} {color}{r['endpoint']:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  PASS  {qual}")
 
     best = results[0]
     print(f"\n  Best endpoint: {Fore.GREEN}{best['endpoint']}{Style.RESET_ALL}  ({best['latency_ms']} ms)")
@@ -197,6 +212,19 @@ def _get_float_input(prompt: str, default: float, min_val: float = 0.1, max_val:
         print(f"  [!] Invalid format. Using default: {default}")
         return default
 
+def check_for_updates():
+    import urllib.request
+    try:
+        url = "https://warp-conf-gen.vercel.app/api/scanner/version"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=2.0) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if data.get("version") and data["version"] != SCRIPT_VERSION:
+                print(f"  {Fore.YELLOW}[!] A NEW VERSION (v{data['version']}) IS AVAILABLE!{Style.RESET_ALL}")
+                print(f"  {Fore.YELLOW}[!] Download it from: https://warp-conf-gen.vercel.app{Style.RESET_ALL}\n")
+    except Exception:
+        pass
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -211,8 +239,10 @@ def main():
     # If no flags are provided (e.g. when run via GUI run button in Pydroid 3),
     # prompt the user interactively inside the terminal.
     if len(sys.argv) == 1:
-        print("\n=== WarpGen Scanner Configuration ===")
-        print("Press [Enter] to use the default value.\n")
+        print(f"\n{Fore.CYAN}{Style.BRIGHT}=== WarpGen Endpoint Scanner v{SCRIPT_VERSION} ==={Style.RESET_ALL}")
+        check_for_updates()
+        print("Finds the absolute fastest, unblocked Cloudflare WARP IPs for your network.\n")
+        print("Press [Enter] at any prompt to use the recommended default.\n")
         try:
             # 1. Limit IPs (0 for all, soft limit of 1792 total usable IPs)
             val = input("1. Limit IPs to scan [Default: 100, Enter 0 for all]: ").strip()
