@@ -13,14 +13,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import base64
-import hashlib
 import ipaddress
 import json
-import os
 import re
-import socket
-import struct
 import subprocess
 import sys
 import threading
@@ -49,46 +44,6 @@ CF_RANGES = [
 ]
 
 CF_PORTS = [500, 2408, 1701, 4500]
-
-# Cloudflare WARP server public key
-_CF_WARP_PUBKEY = base64.b64decode("bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=")
-
-# Precompute MAC1 key: BLAKE2s-256("mac1----" || server_public_key)
-_MAC1_KEY = hashlib.blake2s(b"mac1----" + _CF_WARP_PUBKEY, digest_size=32).digest()
-
-# ── Handshake Builder & Prober ──────────────────────────────────────────────
-
-def _build_wg_handshake_packet() -> bytes:
-    """Build a mathematically valid WireGuard handshake-initiation with MAC1 signed."""
-    msg_type   = struct.pack("<I", 1)
-    reserved   = b"\x00" * 4
-    sender_idx = os.urandom(4)
-    ephemeral  = os.urandom(32)
-    enc_static = os.urandom(48)
-    enc_ts     = os.urandom(28)
-
-    body = msg_type + reserved + sender_idx + ephemeral + enc_static + enc_ts
-    mac1 = hashlib.blake2s(body, digest_size=16, key=_MAC1_KEY).digest()
-    mac2 = b"\x00" * 16
-
-    return body + mac1 + mac2
-
-def check_udp_handshake(ip: str, port: int, timeout: float = 0.5) -> bool:
-    """
-    Sends a WireGuard handshake packet to ip:port via UDP.
-    Returns True if the server replies, False on timeout/error.
-    """
-    packet = _build_wg_handshake_packet()
-    sock   = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(timeout)
-    try:
-        sock.sendto(packet, (ip, port))
-        data, _ = sock.recvfrom(1024)
-        return len(data) > 0
-    except (socket.timeout, OSError):
-        return False
-    finally:
-        sock.close()
 
 # ── Probe ────────────────────────────────────────────────────────────────────
 
@@ -144,8 +99,8 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
     results = []
 
     print(f"\n  Scanning {total:,} IPs  |  ports: {ports}  |  workers: {workers}\n")
-    print(f"  {'Endpoint':<24}  {'Latency':>9}  {'UDP Status':<12}  Quality")
-    print("  " + "-" * 60)
+    print(f"  {'Endpoint':<24}  {'Latency':>9}  Quality")
+    print("  " + "-" * 50)
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(ping_ip, ip, timeout): ip for ip in ips}
@@ -156,40 +111,24 @@ def scan(ranges, ports, workers, timeout, max_ips, top_n) -> list[dict]:
                 _done += 1
                 if latency is not None:
                     _found += 1
-                    
-                    # Verify each port using UDP Handshake Check
-                    ip_results = []
                     for port in ports:
-                        # Since the IP responded to ping, use a tight 0.5s timeout for UDP probe
-                        udp_ok = check_udp_handshake(ip, port, timeout=min(timeout, 0.5))
-                        ip_results.append({
-                            "ip": ip,
-                            "port": port,
-                            "endpoint": f"{ip}:{port}",
-                            "latency_ms": round(latency, 1),
-                            "udp_working": udp_ok
-                        })
-                    
-                    results.extend(ip_results)
+                        results.append({"ip": ip, "port": port,
+                                        "endpoint": f"{ip}:{port}",
+                                        "latency_ms": round(latency, 1)})
                     
                     # Print first port status as preview in real-time
                     lat   = latency
                     color = Fore.GREEN if lat < 80 else Fore.YELLOW if lat < 200 else Fore.RED
                     qual  = "Excellent" if lat < 80 else "Good" if lat < 200 else "Fair" if lat < 400 else "Slow"
                     
-                    any_udp_ok = any(r["udp_working"] for r in ip_results)
-                    udp_txt = f"{Fore.GREEN}Open{Style.RESET_ALL}" if any_udp_ok else f"{Fore.RED}Blocked{Style.RESET_ALL}"
-                    
-                    sys.stdout.write("\r" + " " * 75 + "\r")
-                    print(f"  {color}{ip:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {udp_txt:<19}  {qual}")
+                    sys.stdout.write("\r" + " " * 70 + "\r")
+                    print(f"  {color}{ip:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {qual}")
                 
                 if _done % 5 == 0 or _done == total:
                     _bar(total)
 
-    sys.stdout.write("\r" + " " * 75 + "\r")
-    
-    # Sort results: working UDP first, then sorted by latency ascending
-    results.sort(key=lambda r: (not r["udp_working"], r["latency_ms"]))
+    sys.stdout.write("\r" + " " * 70 + "\r")
+    results.sort(key=lambda r: r["latency_ms"])
     return results[:top_n]
 
 # ── Output ────────────────────────────────────────────────────────────────────
@@ -200,32 +139,20 @@ def summary(results: list[dict]) -> None:
         print("  Try: --timeout 3.0  or  --workers 20\n")
         return
 
-    print(f"\n  {'='*65}")
+    print(f"\n  {'='*55}")
     print(f"  TOP WARP ENDPOINTS FOR YOUR NETWORK")
-    print(f"  {'='*65}")
-    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  {'UDP Status':<12}  Quality")
-    print(f"  {'-'*62}")
+    print(f"  {'='*55}")
+    print(f"  {'#':<4} {'Endpoint':<24} {'Latency':>10}  Quality")
+    print(f"  {'-'*52}")
 
     for i, r in enumerate(results, 1):
         lat   = r["latency_ms"]
         color = Fore.GREEN if lat < 80 else Fore.YELLOW if lat < 200 else Fore.RED
         qual  = "Excellent" if lat < 80 else "Good" if lat < 200 else "Fair" if lat < 400 else "Slow"
-        
-        if not r["udp_working"]:
-            qual = "Unverified"
-            udp_txt = f"{Fore.RED}Blocked{Style.RESET_ALL}"
-        else:
-            udp_txt = f"{Fore.GREEN}Open{Style.RESET_ALL}"
-            
-        print(f"  {i:<4} {color}{r['endpoint']:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {udp_txt:<19}  {qual}")
+        print(f"  {i:<4} {color}{r['endpoint']:<24}{Style.RESET_ALL}  {color}{lat:>7.1f} ms{Style.RESET_ALL}  {qual}")
 
-    # Pick the best endpoint (first working UDP result, or fall back to first ping-only result)
-    udp_ok_results = [r for r in results if r["udp_working"]]
-    best = udp_ok_results[0] if udp_ok_results else results[0]
-    
+    best = results[0]
     print(f"\n  Best endpoint: {Fore.GREEN}{best['endpoint']}{Style.RESET_ALL}  ({best['latency_ms']} ms)")
-    if not best["udp_working"]:
-        print(f"  {Fore.YELLOW}[!] Warning: No endpoints responded to UDP handshakes. WARP might be blocked on your network.{Style.RESET_ALL}")
     print(f"  Paste it into WarpGen Custom IP -> https://warp-conf-gen.vercel.app\n")
 
 def save(results: list[dict], path: str) -> None:
