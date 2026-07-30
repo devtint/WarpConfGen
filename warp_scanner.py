@@ -50,36 +50,36 @@ CF_PORTS = [500, 2408, 1701, 4500]
 
 # ── Probe ────────────────────────────────────────────────────────────────────
 
-def ping_ip(ip: str, timeout: float) -> float | None:
-    """Ping an IP and return average latency in ms, or None if unreachable."""
-    if sys.platform == "win32":
-        cmd = ["ping", "-n", "1", "-w", str(int(timeout * 1000)), ip]
-        pat = re.compile(r"time[=<](\d+)ms", re.IGNORECASE)
-    else:
-        cmd = ["ping", "-c", "1", "-W", str(int(timeout)), ip]
-        pat = re.compile(r"time=([\d.]+)\s*ms", re.IGNORECASE)
-
+def probe_ip(ip: str, timeout: float) -> float | None:
+    import time
+    """
+    Stage 1: Measures latency via TCP handshake (1 RTT) without spawning OS subprocesses.
+    Stage 2: Performs a UDP Dummy Probe to detect active ISP blocks (ICMP Unreachable).
+    """
+    start = time.perf_counter()
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout + 1)
-        if r.returncode != 0:
-            return None
-        m = pat.search(r.stdout)
-        return float(m.group(1)) if m else None
+        # Stage 1: TCP Ping for Latency & IP reachability
+        with socket.create_connection((ip, 443), timeout=timeout):
+            latency = (time.perf_counter() - start) * 1000
+            
+        # Stage 2: UDP Dummy Probe to detect explicit ISP blocks (ICMP Unreachable)
+        # Cloudflare's WireGuard silently drops invalid UDP packets, so we expect a timeout.
+        # If the ISP actively blocks the port, they will return an ICMP Unreachable, 
+        # which Python captures as a ConnectionResetError / ConnectionRefusedError.
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(0.5)
+            s.connect((ip, 2408))
+            s.send(b'\x01\x00\x00\x00' + b'\x00' * 144)
+            try:
+                s.recv(1024)
+            except socket.timeout:
+                pass # Expected: Silent drop by Cloudflare
+            except (ConnectionRefusedError, ConnectionResetError, OSError):
+                return None # Failed: Actively blocked by ISP
+                
+        return latency
     except Exception:
         return None
-
-def probe_ip(ip: str, timeout: float) -> float | None:
-    """Probes IP via Ping, then does a secondary TCP 443 check to filter out fake ISP pings."""
-    latency = ping_ip(ip, timeout)
-    if latency is not None:
-        try:
-            # Secondary check: If TCP 443 connects, the IP is truly reachable.
-            # This filters out ISPs that spoof ICMP replies while blocking actual traffic.
-            with socket.create_connection((ip, 443), timeout=timeout):
-                return latency
-        except Exception:
-            return None
-    return None
 
 # ── Scan ─────────────────────────────────────────────────────────────────────
 
