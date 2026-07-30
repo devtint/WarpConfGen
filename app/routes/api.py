@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api")
 @router.get("/scanner/version")
 async def scanner_version():
     """Returns the latest version of the WARP scanner script."""
-    return {"version": "2.0"}
+    return {"version": "2.1"}
 
 
 import base64

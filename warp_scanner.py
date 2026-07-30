@@ -32,7 +32,7 @@ except ImportError:
     class Style:
         BRIGHT = RESET_ALL = ""
 
-SCRIPT_VERSION = "2.0"
+SCRIPT_VERSION = "2.1"
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
