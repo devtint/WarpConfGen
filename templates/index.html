@@ -668,24 +668,14 @@
                         <label data-t="ip-mode">Endpoint IP Mode</label>
                         <div class="radio-group">
                             <div class="radio-item">
-                                <input type="radio" name="mode" id="mode-auto" value="auto" {% if mode=="auto"
-                                    %}checked{% endif %}>
-                                <label for="mode-auto" class="radio-label">
-                                    <i data-lucide="zap"></i>
-                                    <span data-t="mode-auto">Default IPs</span>
-                                </label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" name="mode" id="mode-select" value="select" {% if mode=="select"
-                                    %}checked{% endif %}>
+                                <input type="radio" name="mode" id="mode-select" value="select" {% if mode != "custom" %}checked{% endif %}>
                                 <label for="mode-select" class="radio-label">
                                     <i data-lucide="list"></i>
-                                    <span data-t="mode-select">From List</span>
+                                    <span data-t="mode-select">ISP List</span>
                                 </label>
                             </div>
                             <div class="radio-item">
-                                <input type="radio" name="mode" id="mode-custom" value="custom" {% if mode=="custom"
-                                    %}checked{% endif %}>
+                                <input type="radio" name="mode" id="mode-custom" value="custom" {% if mode == "custom" %}checked{% endif %}>
                                 <label for="mode-custom" class="radio-label">
                                     <i data-lucide="edit-3"></i>
                                     <span data-t="mode-custom">Custom IP</span>
@@ -694,13 +684,23 @@
                         </div>
                     </div>
 
-                    <div id="select-box" class="form-group {% if mode != 'select' %}hidden{% endif %}">
-                        <label data-t="choose-ip">Choose available IP</label>
-                        <select name="selected_ip">
-                            {% for ip in known_ips %}
-                            <option value="{{ ip }}" {% if selected_ip==ip %}selected{% endif %}>{{ ip }}</option>
-                            {% endfor %}
-                        </select>
+                    <div id="select-box" class="form-group {% if mode == 'custom' %}hidden{% endif %}">
+                        <div style="margin-bottom: 12px;">
+                            <label data-t="choose-isp">Choose ISP</label>
+                            <select id="isp-select" name="selected_isp" onchange="onIspChange(this.value)">
+                                {% for isp_key in isp_warp_ips %}
+                                <option value="{{ isp_key }}">{{ isp_key.replace('_', ' ') }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label data-t="choose-ip">Choose available IP</label>
+                            <select id="ip-select" name="selected_ip">
+                                {% for ip in isp_warp_ips["MPT_Fiber"] %}
+                                <option value="{{ ip }}" {% if selected_ip==ip %}selected{% endif %}>{{ ip }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
 
                     <div id="custom-box" class="form-group {% if mode != 'custom' %}hidden{% endif %}">
@@ -889,9 +889,9 @@
                 'subtitle': 'Cloudflare WARP Configuration Generator',
                 'gen-count': 'Total Generations:',
                 'ip-mode': 'Endpoint IP Mode',
-                'mode-auto': 'Default IPs',
-                'mode-select': 'From List',
+                'mode-select': 'ISP List',
                 'mode-custom': 'Custom IP',
+                'choose-isp': 'Choose ISP',
                 'choose-ip': 'Choose available IP',
                 'enter-ip': 'Enter Custom Endpoint IP',
                 'port': 'Port',
@@ -942,9 +942,9 @@
                 'subtitle': 'Cloudflare WARP Configuration ထုတ်ယူခြင်း',
                 'gen-count': 'စုစုပေါင်း ထုတ်ယူမှုအရေအတွက် -',
                 'ip-mode': 'Endpoint IP ရွေးချယ်မှု',
-                'mode-auto': 'မူလ IP များ',
-                'mode-select': 'စာရင်းထဲမှရွေးရန်',
+                'mode-select': 'ISP စာရင်း',
                 'mode-custom': 'ကိုယ်တိုင်ရိုက်ရန်',
+                'choose-isp': 'ISP အမျိုးအစား ရွေးချယ်ပါ',
                 'choose-ip': 'ရရှိနိုင်သော IP ကိုရွေးပါ',
                 'enter-ip': 'Custom Endpoint IP ရိုက်ထည့်ပါ',
                 'port': 'Port နံပါတ်',
@@ -1006,6 +1006,21 @@
             });
         }
 
+        const ispWarpIps = {{ isp_warp_ips | tojson }};
+
+        function onIspChange(ispKey) {
+            const ipSelect = document.getElementById('ip-select');
+            if (!ipSelect) return;
+            ipSelect.innerHTML = '';
+            const ips = ispWarpIps[ispKey] || [];
+            ips.forEach(function (ip) {
+                const opt = document.createElement('option');
+                opt.value = ip;
+                opt.textContent = ip;
+                ipSelect.appendChild(opt);
+            });
+        }
+
         // Init Language
         const savedLang = localStorage.getItem('pref_lang') || 'en';
         setLang(savedLang);
@@ -1039,11 +1054,12 @@
             } catch { return []; }
         }
 
-        function saveToHistory(conf, endpoint) {
+        function saveToHistory(conf, endpoint, filename) {
             const history = getHistory();
             history.unshift({
                 conf: conf,
                 endpoint: endpoint,
+                filename: filename || 'Warp.conf',
                 timestamp: Date.now()
             });
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
@@ -1072,7 +1088,7 @@
                             <pre>${item.conf}</pre>
                         </div>
                         <div class="btn-group" style="margin-top:16px;">
-                            <a href="data:application/octet-stream;charset=utf-8,${encodeURIComponent(item.conf)}" download="warp-saved-${index}.conf" class="btn-primary" style="padding:12px 32px; margin:0; width:auto;">
+                            <a href="data:application/octet-stream;charset=utf-8,${encodeURIComponent(item.conf)}" download="${item.filename || 'Warp.conf'}" class="btn-primary" style="padding:12px 32px; margin:0; width:auto;">
                                 <i data-lucide="download"></i> <span data-t="btn-download">${translations[lang]['btn-download']}</span>
                             </a>
                             <button class="btn-outline" data-conf="${encodeURIComponent(item.conf)}" onclick="navigator.clipboard.writeText(decodeURIComponent(this.getAttribute('data-conf'))); showToast('${translations[lang]['copied']}')" style="padding:12px 32px; font-size:18px; display:flex; align-items:center; gap:10px; font-weight:700;">
@@ -1271,7 +1287,7 @@
                 const currentLang = localStorage.getItem('pref_lang') || 'en';
 
                 // Save to history
-                saveToHistory(data.conf, data.endpoint);
+                saveToHistory(data.conf, data.endpoint, data.filename);
 
                 resultContainer.innerHTML = `
                     <section class="output-section">
@@ -1281,7 +1297,7 @@
                                 <img src="data:image/png;base64,${data.qr}" alt="QR Config">
                             </div>
                             <div class="btn-group">
-                                <a href="data:application/octet-stream;charset=utf-8,${encodeURIComponent(data.conf)}" download="warp-${Math.floor(Date.now() / 1000)}.conf" class="btn-primary" style="padding:12px 32px; margin:0; width:auto;">
+                                <a href="data:application/octet-stream;charset=utf-8,${encodeURIComponent(data.conf)}" download="${data.filename || 'Warp.conf'}" class="btn-primary" style="padding:12px 32px; margin:0; width:auto;">
                                     <i data-lucide="download"></i> <span data-t="btn-download">${translations[currentLang]['btn-download']}</span>
                                 </a>
                                 <button class="btn-outline" data-conf="${encodeURIComponent(data.conf)}" onclick="navigator.clipboard.writeText(decodeURIComponent(this.getAttribute('data-conf'))); showToast('${translations[currentLang]['copied']}')" style="padding:12px 32px; font-size:18px; display:flex; align-items:center; gap:10px; font-weight:700;">

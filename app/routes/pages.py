@@ -47,11 +47,12 @@ async def index(request: Request):
         {
             "request": request,
             "display_count": display_count,
-            "mode": "auto",
+            "mode": "select",
             "selected_ip": "",
             "custom_ip": "",
             "port": 500,
             "known_ips": settings.known_warp_ips,
+            "isp_warp_ips": settings.isp_warp_ips,
         },
     )
 

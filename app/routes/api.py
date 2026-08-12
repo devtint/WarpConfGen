@@ -100,26 +100,32 @@ async def api_v2_update(sub_id: str = Form(None)):
 
 @router.post("/generate")
 async def api_generate(
-    mode: str = Form("auto"),
+    mode: str = Form("select"),
+    selected_isp: str = Form(""),
     selected_ip: str = Form(""),
     custom_ip: str = Form(""),
     port: int = Form(500),
 ):
-    """Generate a WARP WireGuard configuration."""
+    """Generate a WARP WireGuard configuration with custom output filename."""
     try:
         target_ip = ""
-        if mode == "auto":
-            target_ip = settings.known_warp_ips[0]
-        elif mode == "select":
-            target_ip = selected_ip if selected_ip else settings.known_warp_ips[0]
-        else:
+        filename = "Warp.conf"
+
+        if mode == "custom":
             target_ip = custom_ip.strip()
             if not target_ip:
                 return {"error": "Custom IP required"}
             ipaddress.ip_address(target_ip)
+            clean_ip = target_ip.replace(".", "_")
+            filename = f"Warp_Custom_{clean_ip}.conf"
+        else:
+            target_ip = selected_ip if selected_ip else settings.known_warp_ips[0]
+            isp_name = selected_isp.strip().replace(" ", "_") if selected_isp else "WARP"
+            filename = f"Warp_{isp_name}.conf"
 
-        logger.info("generation_requested", mode=mode, ip=target_ip, port=port)
+        logger.info("generation_requested", mode=mode, isp=selected_isp, ip=target_ip, port=port)
         result = await generate_warp(target_ip, port)
+        result["filename"] = filename
         await increment_stats()
         return result
     except ValueError as exc:
